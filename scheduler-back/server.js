@@ -9,8 +9,8 @@ dotenv.config();
 const app = express();
 app.use(express.json());
 
-// CORS設定（必要に応じてオリジンを限定）
-app.use(cors({ origin: 'http://localhost:3001' }));
+// CORS設定 一旦全部許す
+app.use(cors());
 
 // MongoDB接続
 mongoose.connect(process.env.MONGODB_URI, { useNewUrlParser: true, useUnifiedTopology: true })
