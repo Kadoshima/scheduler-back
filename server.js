@@ -140,7 +140,7 @@ app.post('/booking', async (req, res) => {
     if (slackWebhookUrl) {
       const parseDate = parse(date, 'yyyyMMdd', new Date());
       const payload = {
-        text: `新しい予約が入りました！\n日付: ${parseDate.getFullYear}年 ${parseDate.getMonth}月 ${parseDate.getDate}日 \n時間: ${start_time}時\nタイトル: ${title}\n内容: ${content}`
+        text: `新しい予約が入りました！\n日付: ${parseDate.getFullYear()}年 ${parseDate.getMonth()}月 ${parseDate.getDate()}日 \n時間: ${start_time}時\nタイトル: ${title}\n内容: ${content}`
       };
 
       await fetch(slackWebhookUrl, {
