@@ -135,6 +135,22 @@ app.post('/booking', async (req, res) => {
       content
     });
 
+    // slackへの通知
+    const slackWebhookUrl = process.env.SLACK_WEBHOOK_URL;
+    if (slackWebhookUrl) {
+      const payload = {
+        text: `新しい予約が入りました！\n日付: ${date}\n時間: ${start_time}時\nタイトル: ${title}\n内容: ${content}`
+      };
+
+      await fetch(slackWebhookUrl, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(payload)
+      });
+    }
+
     await newReservation.save();
     return res.status(201).json({
       message: 'Reservation created successfully',
