@@ -3,10 +3,25 @@ import mongoose from 'mongoose';
 import { addDays, subDays, format, parse } from 'date-fns';
 import dotenv from 'dotenv';
 import cors from 'cors';
+import fs from 'fs';
+import https from 'https';
 
 dotenv.config();
 
 const app = express();
+
+// 証明書ファイルのパス
+// Let’s Encrypt で発行した場所を指定
+const SSL_KEY_PATH  = '/etc/letsencrypt/live/example.com/privkey.pem';
+const SSL_CERT_PATH = '/etc/letsencrypt/live/example.com/fullchain.pem';
+
+const options = {
+  key: fs.readFileSync(SSL_KEY_PATH, 'utf-8'),
+  cert: fs.readFileSync(SSL_CERT_PATH, 'utf-8')
+};
+
+// const PORT = 443;
+
 app.use(express.json());
 
 // CORS設定 一旦全部許す
@@ -135,6 +150,8 @@ app.post('/booking', async (req, res) => {
 });
 
 const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => {
-  console.log(`Server is running on port ${PORT}`);
+
+const httpsServer = https.createServer(options, app);
+httpsServer.listen(PORT, () => {
+  console.log(`Server running on port ${PORT}`);
 });
