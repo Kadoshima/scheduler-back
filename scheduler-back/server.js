@@ -42,6 +42,11 @@ const reservationSchema = new mongoose.Schema({
 
 const Reservation = mongoose.model('Reservation', reservationSchema);
 
+// ヘルスチェックAPI
+app.get('/api/health', (req, res) => {
+  res.status(200).json({ status: 'ok', message: 'API is healthy.' });
+});
+
 // 予約情報取得API
 app.get('/booking/list/:date', async (req, res) => {
   try {
