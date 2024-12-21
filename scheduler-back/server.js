@@ -12,8 +12,8 @@ const app = express();
 
 // 証明書ファイルのパス
 // Let’s Encrypt で発行した場所を指定
-const SSL_KEY_PATH  = '/etc/letsencrypt/live/example.com/privkey.pem';
-const SSL_CERT_PATH = '/etc/letsencrypt/live/example.com/fullchain.pem';
+const SSL_KEY_PATH  = '/etc/letsencrypt/live/os3-378-22222.vs.sakura.ne.jp/privkey.pem';
+const SSL_CERT_PATH = '/etc/letsencrypt/live/os3-378-22222.vs.sakura.ne.jp/fullchain.pem';
 
 const options = {
   key: fs.readFileSync(SSL_KEY_PATH, 'utf-8'),
