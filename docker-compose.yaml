@@ -25,6 +25,9 @@ services:
     environment:
       - MONGODB_URI=mongodb://root:example@mongo:27017/test_db?authSource=admin
       - PORT=5000
+    volumes:
+      - /etc/letsencrypt/live/os3-378-22222.vs.sakura.ne.jp:/etc/letsencrypt/live/example.com
+      # example.com にしておけばドメインがバレてもいいと思ってこうした。。。
 
   mongo:
     image: mongo
