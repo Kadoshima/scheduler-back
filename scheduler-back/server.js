@@ -46,16 +46,19 @@ app.get('/booking/list/:date', async (req, res) => {
         acc[reservation.date] = {};
       }
       acc[reservation.date][reservation.startTime] = {
-      title: reservation.title,
+        title: reservation.title,
         content: reservation.content
       };
       return acc;
     }, {});
 
-    res.json(result);
+    return res.status(200).json(result);
   } catch (error) {
     console.error('Error fetching reservations:', error);
-    res.status(500).json({ error: 'Internal server error' });
+    return res.status(500).json({
+      error: 'Internal server error',
+      message: error.message
+    });
   }
 });
 
@@ -64,22 +67,47 @@ app.post('/booking', async (req, res) => {
   try {
     const { date, start_time, title, content } = req.body;
 
-    // 入力バリデーション
-    if (!date || !start_time || !title || !content) {
-      return res.status(400).json({ error: 'All fields are required' });
+    // 必須項目のバリデーション
+    const missingFields = [];
+    if (!date) missingFields.push('date');
+    if (!start_time) missingFields.push('start_time');
+    if (!title) missingFields.push('title');
+    if (!content) missingFields.push('content');
+
+    if (missingFields.length > 0) {
+      return res.status(400).json({
+        error: 'Missing required fields',
+        missingFields,  
+        message: `必須項目が足りません: ${missingFields.join(', ')}`
+      });
     }
 
-    // 日付と時間のフォーマット確認
-    if (!/^\d{8}$/.test(date) || !/^\d{1,2}$/.test(start_time)) {
-      return res.status(400).json({ error: 'Invalid date or time format' });
+    // 日付フォーマット確認
+    if (!/^\d{8}$/.test(date)) {
+      return res.status(400).json({
+        error: 'Invalid date format',
+        message: '日付は「yyyyMMdd」形式で指定してください'
+      });
+    }
+
+    // 時間フォーマット確認
+    if (!/^\d{1,2}$/.test(start_time)) {
+      return res.status(400).json({
+        error: 'Invalid time format',
+        message: '時間は1桁または2桁の数字で指定してください（例：9, 10, 17）'
+      });
     }
 
     // 重複チェック
     const existingReservation = await Reservation.findOne({ date, startTime: start_time });
     if (existingReservation) {
-      return res.status(409).json({ error: 'This time slot is already reserved' });
+      return res.status(409).json({
+        error: 'Time slot already reserved',
+        message: `指定された時間帯（${start_time}時）はすでに予約されています`
+      });
     }
 
+    // 予約作成
     const newReservation = new Reservation({
       date,
       startTime: start_time,
@@ -88,10 +116,21 @@ app.post('/booking', async (req, res) => {
     });
 
     await newReservation.save();
-    res.status(201).json({ message: 'Reservation created successfully' });
+    return res.status(201).json({
+      message: 'Reservation created successfully',
+      data: {
+        date,
+        startTime: start_time,
+        title,
+        content
+      }
+    });
   } catch (error) {
     console.error('Error creating reservation:', error);
-    res.status(500).json({ error: 'Internal server error' });
+    return res.status(500).json({
+      error: 'Internal server error',
+      message: error.message
+    });
   }
 });
 
@@ -99,27 +138,3 @@ const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
   console.log(`Server is running on port ${PORT}`);
 });
-
-// テスト用のダミーデータ作成
-// async function createDummyData() {
-//   const today = new Date();
-//   for (let i = -7; i <= 7; i++) {
-//     const date = addDays(today, i);
-//     const formattedDate = format(date, 'yyyyMMdd');
-//     for (let hour = 9; hour <= 17; hour++) {
-//       if (Math.random() < 0.3) {  // 30%の確率で予約を作成
-//         await Reservation.create({
-//           date: formattedDate,
-//           startTime: hour.toString(),
-//           title: `テスト予約 ${i}-${hour}`,
-//           content: `テスト内容 ${i}-${hour}`
-//         });
-//       }
-//     }
-//   }
-//   console.log('Dummy data created');
-// }
-
-// テスト用のダミーデータを作成（本番環境では削除してください）
-// createDummyData();
-
