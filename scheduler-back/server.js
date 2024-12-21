@@ -101,24 +101,24 @@ app.listen(PORT, () => {
 });
 
 // テスト用のダミーデータ作成
-async function createDummyData() {
-  const today = new Date();
-  for (let i = -7; i <= 7; i++) {
-    const date = addDays(today, i);
-    const formattedDate = format(date, 'yyyyMMdd');
-    for (let hour = 9; hour <= 17; hour++) {
-      if (Math.random() < 0.3) {  // 30%の確率で予約を作成
-        await Reservation.create({
-          date: formattedDate,
-          startTime: hour.toString(),
-          title: `テスト予約 ${i}-${hour}`,
-          content: `テスト内容 ${i}-${hour}`
-        });
-      }
-    }
-  }
-  console.log('Dummy data created');
-}
+// async function createDummyData() {
+//   const today = new Date();
+//   for (let i = -7; i <= 7; i++) {
+//     const date = addDays(today, i);
+//     const formattedDate = format(date, 'yyyyMMdd');
+//     for (let hour = 9; hour <= 17; hour++) {
+//       if (Math.random() < 0.3) {  // 30%の確率で予約を作成
+//         await Reservation.create({
+//           date: formattedDate,
+//           startTime: hour.toString(),
+//           title: `テスト予約 ${i}-${hour}`,
+//           content: `テスト内容 ${i}-${hour}`
+//         });
+//       }
+//     }
+//   }
+//   console.log('Dummy data created');
+// }
 
 // テスト用のダミーデータを作成（本番環境では削除してください）
 createDummyData();
