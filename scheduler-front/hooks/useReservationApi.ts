@@ -1,5 +1,7 @@
+// ===== hooks/useReservationApi.ts =====
+
 import { useState, useEffect } from 'react';
-import { format, startOfWeek, addDays } from 'date-fns';
+import { format, startOfWeek, endOfWeek } from 'date-fns';
 
 type ReservationData = {
   [date: string]: {
@@ -15,10 +17,10 @@ export function useReservationApi(initialDate: Date) {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
+  // ★ API のベース URL。存在しない場合はデフォルトを利用。
   const apiBaseUrl = process.env.NEXT_PUBLIC_API_BASE_URL || 'https://os3-378-22222.vs.sakura.ne.jp:5001';
 
   useEffect(() => {
-    console.log('API Base URL:', apiBaseUrl);
     const initializeApi = async () => {
       const isApiReachable = await checkApiConnection();
       if (isApiReachable) {
@@ -28,21 +30,62 @@ export function useReservationApi(initialDate: Date) {
         setIsLoading(false);
       }
     };
-
     initializeApi();
   }, [initialDate]);
 
+  // ここを実装
   const fetchReservations = async (date: Date) => {
     setIsLoading(true);
     setError(null);
+
     try {
-      // TODO: サーバーから予約データを取得する実装を追加する
-      const emptyData: ReservationData = {};
-      console.log('Initialized empty reservation data:', emptyData);
-      setReservations(emptyData);
+      const start = format(startOfWeek(date, { weekStartsOn: 1 }), 'yyyyMMdd');
+      const end = format(endOfWeek(date, { weekStartsOn: 1 }), 'yyyyMMdd');
+      const url = `${apiBaseUrl}/bookings?start=${start}&end=${end}`;
+
+      console.log('Fetching reservations:', url);
+
+      const response = await fetch(url);
+      console.log('API Response Status:', response.status, response.statusText);
+
+      const responseText = await response.text();
+      console.log('Raw API response:', responseText);
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}, message: ${responseText}`);
+      }
+
+      let data;
+      try {
+        data = JSON.parse(responseText);
+      } catch (parseError) {
+        console.error('Failed to parse JSON:', parseError);
+        throw new Error(`Invalid JSON response: ${responseText}`);
+      }
+
+      console.log('Parsed reservation data:', data);
+
+      if (!Array.isArray(data)) {
+        throw new Error(`Invalid data format. Expected an array, got: ${typeof data}`);
+      }
+
+      // データを { date: { hour: { title, content }}} 形式に変換
+      const formattedData: ReservationData = {};
+      data.forEach((reservation: any) => {
+        if (!formattedData[reservation.date]) {
+          formattedData[reservation.date] = {};
+        }
+        formattedData[reservation.date][reservation.start_time] = {
+          title: reservation.title,
+          content: reservation.content,
+        };
+      });
+
+      console.log('Formatted reservation data:', formattedData);
+      setReservations(formattedData);
     } catch (err) {
       console.error('Error fetching reservation data:', err);
-      setError('予約データの取得中にエラーが発生しました。');
+      setError(err instanceof Error ? err.message : '予約データの取得中に不明なエラーが発生しました。');
     } finally {
       setIsLoading(false);
     }
@@ -55,14 +98,14 @@ export function useReservationApi(initialDate: Date) {
         date,
         start_time: startTime,
         title,
-        content
+        content,
       };
 
       console.log('リクエスト情報:', {
         url,
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(requestBody)
+        body: JSON.stringify(requestBody),
       });
 
       const response = await fetch(url, {
@@ -76,7 +119,7 @@ export function useReservationApi(initialDate: Date) {
       console.log('レスポンス情報:', {
         status: response.status,
         statusText: response.statusText,
-        headers: Object.fromEntries(response.headers.entries())
+        headers: Object.fromEntries(response.headers.entries()),
       });
 
       const responseText = await response.text();
@@ -103,8 +146,8 @@ export function useReservationApi(initialDate: Date) {
         ...prev,
         [date]: {
           ...prev[date],
-          [startTime]: { title, content }
-        }
+          [startTime]: { title, content },
+        },
       }));
 
       return true;
@@ -124,14 +167,14 @@ export function useReservationApi(initialDate: Date) {
     try {
       const url = `${apiBaseUrl}/api/health`;
       console.log('Checking API connection at:', url);
-      
-      const response = await fetch(url, { 
+
+      const response = await fetch(url, {
         method: 'GET',
         headers: {
           'Content-Type': 'application/json',
         },
       });
-      
+
       console.log('API health check response:', {
         status: response.status,
         statusText: response.statusText,
@@ -159,4 +202,3 @@ export function useReservationApi(initialDate: Date) {
 
   return { reservations, isLoading, error, fetchReservations, createReservation, checkApiConnection };
 }
-
