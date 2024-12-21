@@ -45,7 +45,10 @@ app.get('/booking/list/:date', async (req, res) => {
       if (!acc[reservation.date]) {
         acc[reservation.date] = {};
       }
-      acc[reservation.date][reservation.startTime] = reservation.title;
+      acc[reservation.date][reservation.startTime] = {
+      title: reservation.title,
+        content: reservation.content
+      };
       return acc;
     }, {});
 
